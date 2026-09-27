@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cygnet Hymnal</title>
+<link rel="icon" href="assets/cygnet-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Lora:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --u: min(1vw, 1.78vh);           /* 1% of a 16:9 stage, whatever the screen */
+  --navy-0:#030a1c; --navy-1:#071634; --navy-2:#0c2a66; --royal:#1f55d6; --sky:#5aa9ff;
+  --gold:#f4b73c; --gold-2:#ffd57e; --cream:#fbf6ea;
+  --display:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --lyric:"Lora", Georgia, "Times New Roman", serif;
+  --caps:"Cinzel", Georgia, serif;
+
+  /* theme tokens (Midnight default) */
+  --bg:var(--navy-0); --ink:var(--cream); --ink-soft:rgba(251,246,234,.66); --ink-faint:rgba(251,246,234,.34);
+  --accent:var(--gold); --accent-2:var(--gold-2); --line:rgba(255,255,255,.12);
+  --glass:rgba(255,255,255,.06); --glass-brd:rgba(255,255,255,.14);
+  --lyric-shadow:0 .08em .5em rgba(0,0,0,.45);
+  --credit-ink:rgba(251,246,234,.82); --credit-name:var(--gold-2); --credit-shadow:0 1px 8px rgba(0,0,0,.5);
+}
+:root[data-theme="cygnet"]{
+  --bg:#dcecff; --ink:#0a2463; --ink-soft:rgba(10,36,99,.72); --ink-faint:rgba(10,36,99,.4);
+  --accent:#1f55d6; --accent-2:#c98a0c; --line:rgba(10,36,99,.14);
+  --glass:rgba(255,255,255,.55); --glass-brd:rgba(10,36,99,.14);
+  --lyric-shadow:0 0 .5em rgba(255,255,255,.95), 0 0 1.2em rgba(255,255,255,.8);
+  --credit-ink:#fff; --credit-name:#ffd57e; --credit-shadow:none;
+}
+:root[data-theme="contrast"]{
+  --bg:#000; --ink:#fff; --ink-soft:rgba(255,255,255,.75); --ink-faint:rgba(255,255,255,.4);
+  --accent:#ffd057; --accent-2:#ffe39a; --line:rgba(255,255,255,.18);
+  --glass:rgba(255,255,255,.07); --glass-brd:rgba(255,255,255,.18);
+  --lyric-shadow:none;
+  --credit-ink:rgba(255,255,255,.88); --credit-name:#ffd057; --credit-shadow:none;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--lyric);font-variant-numeric:lining-nums;-webkit-font-smoothing:antialiased;user-select:none;cursor:default}
+body.idle, body.idle *{cursor:none !important}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+/* ---------- Backdrop ---------- */
+.backdrop{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.backdrop > *{position:absolute;inset:0;transition:opacity .8s ease}
+.bd-midnight{
+  background:
+    radial-gradient(60% 55% at 50% -8%, rgba(244,183,60,.22), transparent 70%),
+    radial-gradient(70% 60% at 50% 115%, rgba(31,85,214,.55), transparent 70%),
+    radial-gradient(40% 40% at 8% 60%, rgba(31,85,214,.22), transparent 70%),
+    linear-gradient(180deg, var(--navy-0) 0%, var(--navy-1) 55%, #0a2150 100%);
+}
+.rays{
+  position:absolute;left:50%;top:calc(-80vmax - 14vh);width:160vmax;height:160vmax;margin-left:-80vmax;
+  background:repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,214,130,.075) 0 2.2deg, transparent 3deg 11deg);
+  -webkit-mask:radial-gradient(closest-side, #000 20%, transparent 78%); mask:radial-gradient(closest-side, #000 20%, transparent 78%);
+  animation:spin 240s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.staff{position:absolute;left:0;right:0;bottom:0;width:100%;height:34vh}
+.staff path{fill:none;stroke-linecap:round}
+.bd-cygnet{background:#dcecff url("assets/cygnet-background.png") center top/cover no-repeat;opacity:0}
+.bd-contrast{background:#000;opacity:0}
+[data-theme="cygnet"] .bd-cygnet{opacity:1}
+[data-theme="contrast"] .bd-contrast{opacity:1}
+[data-theme="cygnet"] .bd-midnight,[data-theme="contrast"] .bd-midnight{opacity:0}
+
+/* ---------- Shared chrome ---------- */
+.screen{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;transition:opacity .5s ease, transform .6s cubic-bezier(.2,.7,.2,1)}
+.screen[hidden]{display:flex !important;opacity:0;pointer-events:none;transform:scale(.985)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--u)*2.2) calc(var(--u)*3)}
+.logo-badge{display:flex;align-items:center;gap:calc(var(--u)*1.2);padding:calc(var(--u)*.7) calc(var(--u)*1.4);border-radius:calc(var(--u)*1.4);background:rgba(255,255,255,.92);box-shadow:0 .6em 2em rgba(0,0,0,.25)}
+.logo-badge img{height:calc(var(--u)*5);display:block}
+[data-theme="cygnet"] .home .logo-badge{background:transparent;box-shadow:none;padding:0}
+[data-theme="cygnet"] .home .logo-badge img{opacity:0}  /* the background art already carries the logo */
+.home-right{display:flex;align-items:center;gap:calc(var(--u)*2.4)}
+.home-ctrls{order:-1}
+.clock{font-family:var(--caps);letter-spacing:.14em;font-size:calc(var(--u)*1.5);color:var(--ink-soft);text-align:right;line-height:1.5}
+.clock b{display:block;font-family:var(--display);font-weight:600;letter-spacing:.02em;font-size:calc(var(--u)*3.4);color:var(--ink);line-height:1}
+
+/* ---------- Home ---------- */
+.home-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 calc(var(--u)*4);margin-top:calc(var(--u)*-4)}
+.eyebrow{font-family:var(--caps);font-weight:700;letter-spacing:.42em;font-size:calc(var(--u)*1.25);color:var(--accent);display:flex;align-items:center;gap:1.2em}
+.eyebrow::before,.eyebrow::after{content:"";width:calc(var(--u)*7);height:1px;background:linear-gradient(90deg,transparent,var(--accent))}
+.eyebrow::after{transform:scaleX(-1)}
+.home.searching h1{display:none}
+.home.searching .home-main{margin-top:0}
+.home.searching .entry{margin-top:calc(var(--u)*1.2)}
+.home.searching .entry input.text{font-size:calc(var(--u)*4.4);padding:calc(var(--u)*.6) 0 calc(var(--u)*1)}
+.home.searching .preview{margin-top:calc(var(--u)*1.2)}
+.home.searching .result{padding:calc(var(--u)*.55) calc(var(--u)*1.6)}
+.home.searching .result .rt{font-size:calc(var(--u)*2.1)}
+.home.searching .result .rn{font-size:calc(var(--u)*2.4)}
+.home.searching .result .rl{font-size:calc(var(--u)*1.25)}
+.home-main{min-height:0}
+.home h1{font-family:var(--display);font-style:italic;font-weight:600;font-size:calc(var(--u)*5.4);line-height:1.05;margin-top:calc(var(--u)*1.6);letter-spacing:-.01em}
+.entry{position:relative;margin-top:calc(var(--u)*3.2);width:min(100%, calc(var(--u)*64))}
+.entry input{
+  width:100%;background:transparent;border:0;outline:0;text-align:center;caret-color:var(--accent);
+  font-family:var(--display);font-weight:700;color:var(--accent);
+  font-size:calc(var(--u)*13);line-height:1.1;padding:0 0 calc(var(--u)*.6);
+  text-shadow:0 0 .35em rgba(244,183,60,.28);
+  font-variant-numeric:lining-nums;
+}
+.entry input.text{font-size:calc(var(--u)*5.2);font-style:italic;padding:calc(var(--u)*3.4) 0 calc(var(--u)*2.4)}
+.entry input::placeholder{color:var(--ink-faint);text-shadow:none;font-weight:600;font-style:italic;font-size:calc(var(--u)*5);}
+.entry .rule{height:2px;margin:0 auto;width:70%;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.8}
+.entry .rule::after{content:"";display:block;height:14px;margin-top:-7px;background:radial-gradient(50% 50% at 50% 50%, rgba(244,183,60,.35), transparent)}
+[data-theme="cygnet"] .entry input{text-shadow:none}
+.entry input:placeholder-shown{caret-color:transparent}
+.entry input:placeholder-shown + .rule{animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.35}}
+[data-theme="cygnet"] .preview .pv-hint{color:var(--ink-soft)}
+[data-theme="cygnet"] .stage-head{padding-left:calc(var(--u)*26);padding-top:calc(var(--u)*3)}
+[data-theme="cygnet"] .num-badge{background:rgba(255,255,255,.6)}
+[data-theme="cygnet"] .stage-body{margin-top:calc(var(--u)*3)}
+.preview{min-height:calc(var(--u)*9);margin-top:calc(var(--u)*1.8);display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.6)}
+.preview .pv-title{font-family:var(--display);font-weight:700;font-size:calc(var(--u)*3.6);line-height:1.1}
+.preview .pv-line{font-style:italic;color:var(--ink-soft);font-size:calc(var(--u)*1.9)}
+.preview .pv-hint{font-family:var(--caps);letter-spacing:.24em;font-size:calc(var(--u)*1.1);color:var(--ink-faint);margin-top:calc(var(--u)*.6)}
+.preview .pv-hint kbd{font-family:var(--caps)}
+.preview .pv-miss{color:var(--ink-soft);font-style:italic;font-size:calc(var(--u)*2.2)}
+.results{display:flex;flex-direction:column;gap:calc(var(--u)*.5);width:min(100%,calc(var(--u)*70));margin-top:calc(var(--u)*.4)}
+.result{display:grid;grid-template-columns:calc(var(--u)*7) 1fr;align-items:baseline;gap:calc(var(--u)*1.6);text-align:left;padding:calc(var(--u)*.8) calc(var(--u)*1.6);border-radius:calc(var(--u)*1);border:1px solid transparent;transition:background .2s,border-color .2s}
+.result .rn{font-family:var(--display);font-weight:700;color:var(--accent);font-size:calc(var(--u)*2.8);text-align:right}
+.result .rt{font-family:var(--display);font-weight:700;font-size:calc(var(--u)*2.4);line-height:1.1}
+.result .rl{display:block;font-family:var(--lyric);font-style:italic;font-weight:500;font-size:calc(var(--u)*1.4);color:var(--ink-soft);margin-top:.2em}
+.result.on,.result:hover{background:var(--glass);border-color:var(--glass-brd)}
+
+.home-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:calc(var(--u)*2);padding:calc(var(--u)*2.2) calc(var(--u)*3)}
+.chips{display:flex;flex-wrap:wrap;gap:calc(var(--u)*.9);align-items:center}
+.chips .lbl{font-family:var(--caps);letter-spacing:.3em;font-size:calc(var(--u)*1);color:var(--ink-faint);margin-right:.4em}
+.chip{display:inline-flex;align-items:center;gap:.55em;padding:.55em 1.05em;border-radius:999px;background:var(--glass);border:1px solid var(--glass-brd);font-family:var(--display);font-weight:700;font-size:calc(var(--u)*1.7);backdrop-filter:blur(8px);transition:transform .2s,background .2s}
+.chip:hover{transform:translateY(-2px);background:rgba(244,183,60,.16)}
+.chip b{color:var(--accent);font-weight:700}
+.chip kbd{font-family:var(--caps);font-size:.62em;letter-spacing:.1em;padding:.15em .5em;border-radius:.4em;border:1px solid var(--glass-brd);color:var(--ink-soft)}
+/* designer credit: shown on every screen and in every theme */
+.credit{display:inline-flex;align-items:baseline;gap:.75em;white-space:nowrap;line-height:1}
+.cr-by{font-family:var(--caps);font-weight:700;letter-spacing:.26em;font-size:calc(var(--u)*1.05);color:var(--credit-ink)}
+.cr-name{font-family:var(--display);font-style:italic;font-weight:700;font-size:calc(var(--u)*2);color:var(--credit-name);text-shadow:var(--credit-shadow)}
+.cr-by{text-shadow:var(--credit-shadow)}
+[data-theme="cygnet"] .credit{background:rgba(8,30,88,.92);padding:.55em 1.3em .6em;border-radius:999px;border:1px solid rgba(255,213,126,.55);box-shadow:0 .4em 1.4em rgba(3,20,70,.35)}
+[data-theme="cygnet"] .panel-credit .credit{background:none;padding:0;border:0;box-shadow:none}
+.stage-credit{display:flex;justify-content:center;padding:calc(var(--u)*.2) 0 calc(var(--u)*1.3)}
+.panel-credit{display:flex;justify-content:center;margin-top:calc(var(--u)*2.2);padding-top:calc(var(--u)*1.6);border-top:1px solid rgba(255,255,255,.12);--credit-ink:rgba(251,246,234,.8);--credit-name:var(--gold-2);--credit-shadow:none}
+
+/* ---------- Stage (presenting) ---------- */
+.stage-head{display:flex;align-items:center;gap:calc(var(--u)*1.8);padding:calc(var(--u)*2.4) calc(var(--u)*3.4) 0;transition:opacity .5s}
+.num-badge{flex:none;min-width:calc(var(--u)*6.4);height:calc(var(--u)*6.4);padding:0 calc(var(--u)*1.2);display:grid;place-items:center;border-radius:999px;border:2px solid var(--accent);color:var(--accent);font-family:var(--display);font-weight:700;font-size:calc(var(--u)*3.2);line-height:1;box-shadow:0 0 1.4em rgba(244,183,60,.18) inset}
+.head-title{flex:1;min-width:0;font-family:var(--display);font-style:italic;font-weight:600;font-size:calc(var(--u)*2.9);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.verse-pill{flex:none;font-family:var(--caps);font-weight:700;letter-spacing:.28em;font-size:calc(var(--u)*1.35);padding:.75em 1.3em .7em 1.58em;border-radius:999px;background:var(--glass);border:1px solid var(--glass-brd);color:var(--ink);white-space:nowrap}
+.verse-pill .of{color:var(--ink-faint);letter-spacing:.18em}
+.verse-pill.refrain{background:linear-gradient(90deg, rgba(244,183,60,.28), rgba(244,183,60,.12));border-color:rgba(244,183,60,.55);color:var(--accent-2)}
+[data-theme="cygnet"] .verse-pill.refrain{color:#8a5a00;background:rgba(244,183,60,.25)}
+.stage-body{position:relative;flex:1;margin:calc(var(--u)*1.2) calc(var(--u)*6) calc(var(--u)*1)}
+[data-theme="cygnet"] .stage-body{margin-left:calc(var(--u)*15);margin-right:calc(var(--u)*13)}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;transform:translateY(1.6vh);filter:blur(6px);transition:opacity .55s ease, transform .7s cubic-bezier(.2,.7,.2,1), filter .55s ease;pointer-events:none}
+.slide.show{opacity:1;transform:none;filter:none}
+.slide.leave{opacity:0;transform:translateY(-1.2vh);filter:blur(6px);transition-duration:.35s}
+.lyrics{width:100%;font-family:var(--lyric);font-weight:600;line-height:1.32;text-shadow:var(--lyric-shadow);letter-spacing:.003em}
+.lyrics .ln{display:block}
+.lyrics.nowrap .ln{white-space:nowrap}
+.lyrics.wrap .ln{text-wrap:balance}
+.lyrics.refrain{font-style:italic}
+.lyrics.refrain .ln{color:var(--accent-2)}
+[data-theme="cygnet"] .lyrics.refrain .ln{color:#0b3aa8}
+
+/* title card */
+.tc{display:flex;flex-direction:column;align-items:center}
+.tc-num{font-family:var(--display);font-weight:700;font-size:calc(var(--u)*17);line-height:.9;color:transparent;-webkit-text-stroke:2px var(--accent);text-shadow:0 0 .25em rgba(244,183,60,.18);letter-spacing:.02em}
+[data-theme="cygnet"] .tc-num{-webkit-text-stroke:2px var(--accent);text-shadow:none}
+.tc-title{font-family:var(--display);font-weight:700;font-size:calc(var(--u)*6.6);line-height:1.02;margin-top:calc(var(--u)*1.6);max-width:92%;text-wrap:balance;text-shadow:var(--lyric-shadow)}
+.tc-orn{display:flex;align-items:center;gap:1em;color:var(--accent);margin:calc(var(--u)*2.2) 0 calc(var(--u)*1.6);font-size:calc(var(--u)*1.6)}
+.tc-orn::before,.tc-orn::after{content:"";width:calc(var(--u)*9);height:1px;background:linear-gradient(90deg,transparent,var(--accent))}
+.tc-orn::after{transform:scaleX(-1)}
+.tc-first{font-style:italic;font-weight:500;color:var(--ink-soft);font-size:calc(var(--u)*2.6)}
+.tc-meta{font-family:var(--caps);letter-spacing:.34em;color:var(--ink-faint);font-size:calc(var(--u)*1.2);margin-top:calc(var(--u)*1.8)}
+
+/* end card */
+.ec-amen{font-family:var(--display);font-style:italic;font-weight:700;font-size:calc(var(--u)*11);color:var(--accent);line-height:1}
+.ec-sub{font-family:var(--caps);letter-spacing:.34em;color:var(--ink-faint);font-size:calc(var(--u)*1.25);margin-top:calc(var(--u)*2.4)}
+
+.stage-foot{display:flex;align-items:center;gap:calc(var(--u)*2);padding:0 calc(var(--u)*3.4) calc(var(--u)*1.2)}
+.progress{flex:1;display:flex;gap:calc(var(--u)*.45);align-items:center}
+.progress i{flex:1;height:calc(var(--u)*.42);min-height:3px;border-radius:9px;background:var(--line);transition:background .4s, transform .4s;cursor:pointer}
+.progress i.done{background:color-mix(in srgb, var(--accent) 45%, transparent)}
+.progress i.on{background:var(--accent);transform:scaleY(1.6)}
+.progress i.r{flex:.55}
+.ctrls{display:flex;gap:calc(var(--u)*.6);transition:opacity .4s}
+.ctrl{width:calc(var(--u)*4.4);height:calc(var(--u)*4.4);display:grid;place-items:center;border-radius:999px;background:var(--glass);border:1px solid var(--glass-brd);transition:background .2s, transform .2s}
+.ctrl:hover{background:rgba(244,183,60,.2);transform:translateY(-1px)}
+.ctrl svg{width:46%;height:46%;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body.idle .ctrls, body.idle .home .chips .lbl{opacity:0}
+
+.tap{position:absolute;top:0;bottom:0;z-index:0}
+.tap.l{left:0;width:30%} .tap.r{right:0;width:70%}
+
+/* jump overlay (typing a number while presenting) */
+.jump{position:fixed;left:50%;bottom:calc(var(--u)*7);transform:translate(-50%, 20px);z-index:5;display:flex;align-items:center;gap:calc(var(--u)*1.8);padding:calc(var(--u)*1.2) calc(var(--u)*2.4);border-radius:calc(var(--u)*2);background:rgba(5,14,36,.9);border:1px solid rgba(244,183,60,.5);box-shadow:0 1.5em 4em rgba(0,0,0,.5);backdrop-filter:blur(14px);color:var(--cream);opacity:0;pointer-events:none;transition:opacity .25s, transform .3s cubic-bezier(.2,.7,.2,1)}
+.jump.show{opacity:1;transform:translate(-50%,0)}
+.jump .jn{font-family:var(--display);font-weight:700;color:var(--gold);font-size:calc(var(--u)*5);line-height:1;min-width:2.2ch;text-align:center}
+.jump .jt{font-family:var(--display);font-weight:700;font-size:calc(var(--u)*2.4)}
+.jump .jh{display:block;font-family:var(--caps);letter-spacing:.24em;font-size:calc(var(--u)*1);color:rgba(251,246,234,.5);margin-top:.4em}
+
+/* blackout */
+.black{position:fixed;inset:0;background:#000;z-index:8;opacity:0;pointer-events:none;transition:opacity .6s ease}
+.black.on{opacity:1;pointer-events:auto}
+
+/* toast */
+.toast{position:fixed;top:calc(var(--u)*2.4);left:50%;transform:translate(-50%,-10px);z-index:9;padding:.7em 1.4em;border-radius:999px;background:rgba(5,14,36,.88);color:var(--cream);border:1px solid rgba(255,255,255,.14);font-family:var(--caps);letter-spacing:.2em;font-size:calc(var(--u)*1.15);opacity:0;transition:opacity .3s, transform .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* overlays: help + browse */
+.overlay{position:fixed;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;background:rgba(2,8,22,.72);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:auto}
+.panel{background:linear-gradient(180deg,#0b1f4a,#071634);color:var(--cream);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*2);box-shadow:0 2em 6em rgba(0,0,0,.55);padding:calc(var(--u)*3) calc(var(--u)*3.4);max-height:88vh;display:flex;flex-direction:column}
+.panel h2{font-family:var(--display);font-style:italic;font-weight:700;font-size:calc(var(--u)*3.6);line-height:1}
+.panel .sub{font-family:var(--caps);letter-spacing:.3em;font-size:calc(var(--u)*1);color:var(--gold);margin-bottom:calc(var(--u)*.8)}
+.keys{display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:calc(var(--u)*1) calc(var(--u)*4);margin-top:calc(var(--u)*2.4);font-size:calc(var(--u)*1.6)}
+.keys div{display:flex;align-items:center;gap:1em}
+.keys kbd{flex:none;min-width:5.4em;text-align:center;font-family:var(--caps);font-size:.72em;letter-spacing:.08em;padding:.45em .7em;border-radius:.5em;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:var(--gold-2)}
+.browse{width:min(92vw, calc(var(--u)*120));height:86vh}
+.browse-top{display:flex;align-items:flex-end;justify-content:space-between;gap:2em}
+.browse-top input{width:calc(var(--u)*36);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:999px;color:var(--cream);font-family:var(--lyric);font-size:calc(var(--u)*1.6);padding:.6em 1.2em;outline:0}
+.browse-top input:focus{border-color:var(--gold)}
+.grid{margin-top:calc(var(--u)*2);overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(var(--u)*26),1fr));gap:calc(var(--u)*.4) calc(var(--u)*1.6);padding-right:.6em;align-content:start}
+.grid button{display:flex;gap:1em;align-items:baseline;text-align:left;padding:.5em .7em;border-radius:.6em;font-size:calc(var(--u)*1.55)}
+.grid button:hover,.grid button:focus-visible{background:rgba(244,183,60,.14);outline:0}
+.grid b{flex:none;width:2.6em;text-align:right;font-family:var(--display);color:var(--gold);font-size:1.15em}
+.grid span{font-family:var(--display);font-weight:700;font-size:1.12em;line-height:1.15}
+.grid::-webkit-scrollbar{width:8px}.grid::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:8px}
+
+@media (prefers-reduced-motion: reduce){ .rays{animation:none} .slide{transition:opacity .3s} }
+</style>
+</head>
+<body>
+
+<div class="backdrop" aria-hidden="true">
+  <div class="bd-midnight">
+    <div class="rays"></div>
+    <svg class="staff" viewBox="0 0 1600 340" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#f4b73c" stop-opacity="0"/><stop offset=".35" stop-color="#f4b73c" stop-opacity=".55"/><stop offset="1" stop-color="#f4b73c" stop-opacity="0"/></linearGradient>
+        <linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#5aa9ff" stop-opacity="0"/><stop offset=".5" stop-color="#5aa9ff" stop-opacity=".35"/><stop offset="1" stop-color="#5aa9ff" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 250 C 300 170, 600 330, 900 250 S 1400 170, 1600 230" stroke="url(#g1)" stroke-width="2.2"/>
+      <path d="M0 268 C 300 188, 600 348, 900 268 S 1400 188, 1600 248" stroke="url(#g2)" stroke-width="1.2"/>
+      <path d="M0 286 C 300 206, 600 366, 900 286 S 1400 206, 1600 266" stroke="url(#g2)" stroke-width="1.2"/>
+      <path d="M0 304 C 300 224, 600 384, 900 304 S 1400 224, 1600 284" stroke="url(#g2)" stroke-width="1.2"/>
+      <path d="M0 322 C 300 242, 600 402, 900 322 S 1400 242, 1600 302" stroke="url(#g1)" stroke-width="1.6"/>
+    </svg>
+  </div>
+  <div class="bd-cygnet"></div>
+  <div class="bd-contrast"></div>
+</div>
+
+<!-- ============ HOME ============ -->
+<section class="screen home" id="home">
+  <div class="topbar">
+    <div class="logo-badge"><img src="assets/cygnet-logo.png" alt="Cygnet Private College"></div>
+    <div class="home-right"><div class="clock" id="clock"></div><div class="ctrls home-ctrls">
+      <button class="ctrl" data-act="help" title="Presenter keys (?)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.2-2.5 3.8"/><path d="M12 17.2v.1"/></svg></button>
+      <button class="ctrl" data-act="theme" title="Theme"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg></button>
+      <button class="ctrl" data-act="full" title="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div></div>
+  </div>
+  <div class="home-main">
+    <div class="eyebrow">CYGNET&nbsp;HYMNAL</div>
+    <h1>Which hymn shall we sing?</h1>
+    <div class="entry">
+      <input id="entry" autocomplete="off" spellcheck="false" placeholder="Type a hymn number" aria-label="Hymn number or title">
+      <div class="rule"></div>
+    </div>
+    <div class="preview" id="preview"></div>
+  </div>
+  <div class="home-foot">
+    <div class="chips" id="chips"></div>
+    <div class="credit"><span class="cr-by">MADE AND DESIGNED BY</span><span class="cr-name">Matsika Mukudzei</span></div>
+  </div>
+</section>
+
+<!-- ============ STAGE ============ -->
+<section class="screen stage" id="stage" hidden>
+  <div class="stage-head" id="stageHead">
+    <div class="num-badge" id="sNum"></div>
+    <div class="head-title" id="sTitle"></div>
+    <div class="verse-pill" id="sPill"></div>
+  </div>
+  <div class="stage-body" id="stageBody">
+    <div class="tap l" data-tap="prev"></div><div class="tap r" data-tap="next"></div>
+  </div>
+  <div class="stage-foot">
+    <div class="progress" id="progress"></div>
+    <div class="ctrls">
+      <button class="ctrl" data-act="home" title="Home (Esc)"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
+      <button class="ctrl" data-act="prev" title="Previous (←)"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="ctrl" data-act="next" title="Next (→ / Space)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="ctrl" data-act="theme" title="Theme (T)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg></button>
+      <button class="ctrl" data-act="full" title="Full screen (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    </div>
+  </div>
+  <div class="stage-credit"><div class="credit"><span class="cr-by">MADE AND DESIGNED BY</span><span class="cr-name">Matsika Mukudzei</span></div></div>
+</section>
+
+<div class="jump" id="jump"><div class="jn" id="jn"></div><div><div class="jt" id="jt"></div><span class="jh">ENTER TO OPEN · ESC TO CANCEL</span></div></div>
+<div class="black" id="black"></div>
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="help">
+  <div class="panel" style="width:min(92vw, calc(var(--u)*92))">
+    <div class="sub">PRESENTER GUIDE</div>
+    <h2>Keys for the service</h2>
+    <div class="keys">
+      <div><kbd>0 – 9</kbd>Type a hymn number, then Enter</div>
+      <div><kbd>→ Space</kbd>Next verse (clickers work too)</div>
+      <div><kbd>←</kbd>Previous verse</div>
+      <div><kbd>Home / End</kbd>First or last slide</div>
+      <div><kbd>Esc</kbd>Back to the hymn number screen</div>
+      <div><kbd>B</kbd>Blank the screen (press again to return)</div>
+      <div><kbd>F</kbd>Full screen on the projector</div>
+      <div><kbd>T</kbd>Switch theme while presenting: Midnight, Cygnet, High contrast</div>
+      <div><kbd>+ / −</kbd>Bigger or smaller lyrics</div>
+      <div><kbd>D / R</kbd>Doxology / Response (on home: type D or R, then Enter)</div>
+      <div><kbd>I</kbd>Browse the full index while presenting</div>
+      <div><kbd>?</kbd>Show or hide this guide</div>
+    </div>
+    <div class="panel-credit"><div class="credit"><span class="cr-by">MADE AND DESIGNED BY</span><span class="cr-name">Matsika Mukudzei</span></div></div>
+  </div>
+</div>
+
+<div class="overlay" id="browse">
+  <div class="panel browse">
+    <div class="browse-top">
+      <div><div class="sub">HYMN INDEX</div><h2 id="browseCount">All hymns</h2></div>
+      <input id="browseQ" placeholder="Filter by title or first line…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="panel-credit"><div class="credit"><span class="cr-by">MADE AND DESIGNED BY</span><span class="cr-name">Matsika Mukudzei</span></div></div>
+  </div>
+</div>
+
+<script src="assets/hymns.js"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const DATA = window.HYMNAL;
+  const byNum = new Map(DATA.hymns.map(h => [h.n, h]));
+  const MAX = Math.max(...DATA.hymns.map(h => h.n));
+  const MISSING = new Set(DATA.missing || []);
+  const missMsg = n => MISSING.has(n) ? `Hymn ${n} is missing from the hymnal slides.` : `There is no hymn ${n}. The hymnal runs from 1 to ${MAX}.`;
+  const toHymn = x => ({ n: 0, t: x.title, s: x.sl.map(v => [v.label, v.lines]) });
+  const special = { D: toHymn(DATA.special[0]), R: toHymn(DATA.special[1]) };
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘`´]/g, "'").replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const firstLine = h => (h.s[0] && h.s[0][1][0] || '').replace(/[,;:.!]+$/, '');
+  const INDEX = DATA.hymns.map(h => ({ h, key: norm(h.t + ' ' + h.s.map(s => s[1].join(' ')).slice(0, 1).join(' ')) , title: norm(h.t) }));
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('cyg.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('cyg.' + k, JSON.stringify(v)); } catch {} }
+  };
+
+  /* ---------- theme ---------- */
+  const THEMES = ['midnight', 'cygnet', 'contrast'];
+  const THEME_NAMES = { midnight: 'MIDNIGHT', cygnet: 'CYGNET', contrast: 'HIGH CONTRAST' };
+  let theme = store.get('theme', 'midnight');
+  let scale = store.get('scale', 1);
+  const applyTheme = () => { document.documentElement.dataset.theme = theme; };
+  applyTheme();
+  function cycleTheme() { theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]; store.set('theme', theme); applyTheme(); toast(THEME_NAMES[theme] + ' THEME'); requestAnimationFrame(fitCurrent); }
+
+  let toastT;
+  function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1400); }
+
+  /* ---------- clock ---------- */
+  function tick() {
+    const d = new Date();
+    $('#clock').innerHTML = `<b>${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b>${d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}`;
+  }
+  tick(); setInterval(tick, 10000);
+
+  /* ---------- home ---------- */
+  const entry = $('#entry'), preview = $('#preview');
+  let results = [], sel = 0;
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function search(q) {
+    const nq = norm(q); if (!nq) return [];
+    const words = nq.split(' ');
+    const scored = [];
+    for (const it of INDEX) {
+      if (!words.every(w => it.key.includes(w))) continue;
+      let sc = 0;
+      if (it.title.startsWith(nq)) sc += 3; else if (it.title.includes(nq)) sc += 2; else if (it.key.includes(nq)) sc += 1;
+      scored.push([sc, it.h]);
+    }
+    return scored.sort((a, b) => b[0] - a[0] || a[1].n - b[1].n).slice(0, 4).map(x => x[1]);
+  }
+
+  function renderPreview() {
+    const v = entry.value.trim();
+    const isNum = /^\d*$/.test(v);
+    entry.classList.toggle('text', !!v && !isNum);
+    $('#home').classList.toggle('searching', !!v && !isNum);
+    results = []; sel = 0;
+    if (!v) {
+      preview.innerHTML = `<div class="pv-hint">TYPE A NUMBER FROM 1 TO ${MAX} · OR WORDS TO SEARCH · PRESS ? FOR KEYS</div>`;
+      return;
+    }
+    if (isNum) {
+      const h = byNum.get(+v);
+      preview.innerHTML = h
+        ? `<div class="pv-title">${esc(h.t)}</div><div class="pv-line">“${esc(firstLine(h))}…”</div><div class="pv-hint">PRESS ENTER TO BEGIN</div>`
+        : `<div class="pv-miss">${missMsg(+v)}</div>`;
+      return;
+    }
+    const sp = special[v.toUpperCase()];
+    if (sp) {
+      results = [sp];
+      preview.innerHTML = `<div class="pv-title">${sp.t}</div><div class="pv-line">“${esc(sp.s[0][1][0].replace(/[,;:.!]+$/, ""))}…”</div><div class="pv-hint">PRESS ENTER TO BEGIN · KEEP TYPING TO SEARCH</div>`;
+      return;
+    }
+    if (v.length < 2) { preview.innerHTML = `<div class="pv-hint">KEEP TYPING TO SEARCH BY TITLE OR FIRST LINE</div>`; return; }
+    results = search(v);
+    preview.innerHTML = results.length
+      ? `<div class="results">${results.map((h, i) => `<button class="result${i ? '' : ' on'}" data-n="${h.n}"><span class="rn">${h.n}</span><span class="rt">${esc(h.t)}${h.alt ? ` <small style="font-size:.55em;letter-spacing:.2em;font-family:var(--caps);color:var(--ink-faint)">${h.n > h.alt ? 'SECOND' : 'FIRST'} TUNE</small>` : ''}<span class="rl">${esc(firstLine(h))}</span></span></button>`).join('')}</div>`
+      : `<div class="pv-miss">No hymn matches “${esc(v)}”.</div>`;
+  }
+  function markSel() { preview.querySelectorAll('.result').forEach((b, i) => b.classList.toggle('on', i === sel)); }
+
+  entry.addEventListener('input', renderPreview);
+  entry.addEventListener('keydown', e => {
+    const v = entry.value.trim();
+    if (e.key === 'Enter') {
+      e.preventDefault(); e.stopPropagation();
+      if (/^\d+$/.test(v) && byNum.has(+v)) openHymn(byNum.get(+v));
+      else if (results[sel]) openHymn(results[sel]);
+    } else if (e.key === 'ArrowDown' && results.length) { e.preventDefault(); sel = (sel + 1) % results.length; markSel(); }
+    else if (e.key === 'ArrowUp' && results.length) { e.preventDefault(); sel = (sel - 1 + results.length) % results.length; markSel(); }
+    else if (e.key === 'Escape') { entry.value = ''; renderPreview(); }
+    else if (!v && e.key === '?') { e.preventDefault(); toggleOverlay('help'); }
+  });
+  document.querySelector('.home-ctrls').addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return; ({ help: () => toggleOverlay('help'), theme: cycleTheme, full: toggleFull })[a.dataset.act](); entry.focus(); });
+  preview.addEventListener('click', e => { if (e.target.closest('.pv-title') && results[0] && !results[0].n) openHymn(results[0]); const b = e.target.closest('.result'); if (b) openHymn(byNum.get(+b.dataset.n)); });
+
+  function renderChips() {
+    const recent = store.get('recent', []).map(n => byNum.get(n)).filter(Boolean).slice(0, 5);
+    $('#chips').innerHTML =
+      `<button class="chip" data-sp="D">Doxology <kbd>D ↵</kbd></button>` +
+      `<button class="chip" data-sp="R">Response <kbd>R ↵</kbd></button>` +
+      `<button class="chip" data-act="browse">Full index</button>` +
+      (recent.length ? `<span class="lbl" style="margin-left:1.2em">RECENT</span>` + recent.map(h => `<button class="chip" data-n="${h.n}" title="${esc(h.t)}"><b>${h.n}</b>${esc(h.t.length > 22 ? h.t.slice(0, 21) + '…' : h.t)}</button>`).join('') : '');
+  }
+  $('#chips').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    if (b.dataset.sp) openHymn(special[b.dataset.sp]);
+    else if (b.dataset.n) openHymn(byNum.get(+b.dataset.n));
+    else if (b.dataset.act === 'browse') openBrowse();
+  });
+
+  /* ---------- presenting ---------- */
+  let cur = null, slides = [], idx = 0, layer = null;
+  const body = $('#stageBody');
+
+  // labels are '1', 'R' (refrain), null, or a range like '1–2' when one slide holds two short verses
+  const verseCount = h => Math.max(0, ...h.s.filter(s => s[0] && s[0] !== 'R').flatMap(s => s[0].match(/\d+/g).map(Number)));
+
+  function buildSlides(h) {
+    const total = verseCount(h);
+    const out = [];
+    if (h.n) out.push({ kind: 'title' });
+    h.s.forEach(([label, lines]) => out.push({ kind: 'lyric', label, lines, total }));
+    if (h.n) out.push({ kind: 'end' });
+    return out;
+  }
+
+  function openHymn(h, at = 0) {
+    if (!h) return;
+    cur = h; slides = buildSlides(h); idx = Math.max(0, Math.min(at, slides.length - 1));
+    if (h.n) { const r = store.get('recent', []).filter(n => n !== h.n); r.unshift(h.n); store.set('recent', r.slice(0, 8)); }
+    $('#sNum').textContent = h.n || (h === special.D ? 'D' : 'R');
+    $('#sTitle').textContent = h.t;
+    $('#progress').innerHTML = slides.map((s, i) => `<i data-i="${i}" class="${s.kind === 'lyric' && s.label === 'R' ? 'r' : ''}"></i>`).join('');
+    $('#home').hidden = true; $('#stage').hidden = false;
+    entry.blur();
+    body.querySelectorAll('.slide').forEach(n => n.remove()); layer = null;
+    show(true);
+  }
+
+  function goHome() {
+    cancelJump();
+    $('#stage').hidden = true; $('#home').hidden = false;
+    entry.value = ''; renderPreview(); renderChips();
+    history.replaceState(null, '', location.pathname);
+    setTimeout(() => entry.focus(), 50);
+  }
+
+  function slideHTML(s) {
+    if (s.kind === 'title') {
+      const verses = verseCount(cur);
+      const hasR = cur.s.some(x => x[0] === 'R');
+      const meta = [verses ? `${verses} VERSE${verses > 1 ? 'S' : ''}` : '', hasR ? 'WITH REFRAIN' : '', cur.alt ? `SAME WORDS AS ${cur.alt}, ${cur.n > cur.alt ? 'SECOND' : 'FIRST'} TUNE` : ''].filter(Boolean).join(' · ');
+      return `<div class="tc"><div class="tc-num">${cur.n}</div><div class="tc-title">${esc(cur.t)}</div><div class="tc-orn">✦</div><div class="tc-first">“${esc(firstLine(cur))}…”</div>${meta ? `<div class="tc-meta">${meta}</div>` : ''}</div>`;
+    }
+    if (s.kind === 'end') return `<div class="ec-amen">Amen</div><div class="ec-sub">HYMN ${cur.n} · TYPE ANOTHER NUMBER TO CONTINUE</div>`;
+    return `<div class="lyrics${s.label === 'R' ? ' refrain' : ''}">${s.lines.map(l => `<span class="ln">${esc(l)}</span>`).join('')}</div>`;
+  }
+
+  function show(first) {
+    const s = slides[idx];
+    const el = document.createElement('div');
+    el.className = 'slide';
+    el.innerHTML = slideHTML(s);
+    body.appendChild(el);
+    if (s.kind === 'lyric') fit(el.querySelector('.lyrics')); else fitCard(el);
+    const old = layer; layer = el;
+    if (old) { old.classList.remove('show'); old.classList.add('leave'); setTimeout(() => old.remove(), 450); }
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+
+    // header + progress
+    const pill = $('#sPill');
+    pill.classList.toggle('refrain', s.label === 'R');
+    if (s.kind === 'lyric' && s.label === 'R') pill.innerHTML = 'REFRAIN';
+    else if (s.kind === 'lyric' && s.label) pill.innerHTML = `VERSE${/\D/.test(s.label) ? 'S' : ''} ${s.label}<span class="of"> / ${s.total}</span>`;
+    else if (s.kind === 'title') pill.innerHTML = 'HYMN';
+    else if (s.kind === 'end') pill.innerHTML = 'END';
+    else pill.innerHTML = cur.n ? 'HYMN' : cur.t.toUpperCase();
+    pill.style.visibility = cur.n || s.kind !== 'lyric' ? '' : 'hidden';
+    $('#stageHead').style.opacity = s.kind === 'title' ? 0 : 1;
+    $('#progress').querySelectorAll('i').forEach((b, i) => { b.classList.toggle('on', i === idx); b.classList.toggle('done', i < idx); });
+    if (cur.n) history.replaceState(null, '', '#' + cur.n + (idx ? '/' + idx : ''));
+  }
+
+  function fit(box) {
+    if (!box) return;
+    const wrap = box.parentElement;
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    const maxPx = Math.min(H / (box.children.length * 1.32) , W * 0.075) * scale;
+    const tryFit = mode => {
+      box.classList.remove('nowrap', 'wrap'); box.classList.add(mode);
+      let lo = 12, hi = Math.max(14, maxPx);
+      for (let k = 0; k < 18; k++) {
+        const mid = (lo + hi) / 2; box.style.fontSize = mid + 'px';
+        if (box.scrollHeight <= H && box.scrollWidth <= W + 1 && [...box.children].every(c => c.scrollWidth <= W + 1)) lo = mid; else hi = mid;
+      }
+      return lo;
+    };
+    const a = tryFit('nowrap');
+    if (a < maxPx * 0.62) { const b = tryFit('wrap'); if (b > a * 1.12) { box.style.fontSize = b + 'px'; return; } tryFit('nowrap'); }
+    box.style.fontSize = a + 'px';
+  }
+  // title/end cards: shrink the whole card if a long title makes it taller than the stage
+  function fitCard(el) {
+    const c = el.firstElementChild; if (!c) return;
+    c.style.transform = '';
+    const k = Math.min(1, el.clientHeight * 0.98 / c.offsetHeight, el.clientWidth / c.offsetWidth);
+    if (k < 1) c.style.transform = `scale(${k})`;
+  }
+  function fitCurrent() { if (!layer) return; const l = layer.querySelector('.lyrics'); if (l) fit(l); else fitCard(layer); }
+  addEventListener('resize', fitCurrent);
+  document.fonts && document.fonts.ready.then(fitCurrent);
+
+  const next = () => { if (idx < slides.length - 1) { idx++; show(); } };
+  const prev = () => { if (idx > 0) { idx--; show(); } };
+  const onStage = () => !$('#stage').hidden;
+
+  $('#stage').addEventListener('click', e => {
+    const a = e.target.closest('[data-act]'), t = e.target.closest('[data-tap]'), p = e.target.closest('.progress i');
+    if (a) ({ home: goHome, prev, next, theme: cycleTheme, full: toggleFull })[a.dataset.act]();
+    else if (p) { idx = +p.dataset.i; show(); }
+    else if (t) (t.dataset.tap === 'next' ? next : prev)();
+  });
+
+  /* number jump while presenting */
+  let jumpBuf = '', jumpT;
+  function updJump() {
+    const j = $('#jump'); if (!jumpBuf) return j.classList.remove('show');
+    const h = byNum.get(+jumpBuf);
+    $('#jn').textContent = jumpBuf; $('#jt').textContent = h ? h.t : (MISSING.has(+jumpBuf) ? 'Missing from the slides' : 'No such hymn');
+    j.classList.add('show');
+    clearTimeout(jumpT); jumpT = setTimeout(cancelJump, 6000);
+  }
+  function cancelJump() { jumpBuf = ''; updJump(); }
+
+  /* ---------- global keys ---------- */
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key;
+    if ($('#help').classList.contains('show') && (k === 'Escape' || k === '?')) { e.preventDefault(); return toggleOverlay('help'); }
+    if ($('#browse').classList.contains('show')) { if (k === 'Escape') { e.preventDefault(); toggleOverlay('browse'); } return; }
+    if ($('#black').classList.contains('on') && k.toLowerCase() !== 'b' && k !== 'Escape') { $('#black').classList.remove('on'); if (!/^Arrow|^Page| /.test(k)) return; }
+    if (!onStage()) { if (document.activeElement !== entry && !/^(Tab|Shift)$/.test(k)) entry.focus(); return; }
+
+    if (/^\d$/.test(k)) { e.preventDefault(); if (jumpBuf.length < 3) jumpBuf += k; return updJump(); }
+    if (jumpBuf) {
+      if (k === 'Enter') { e.preventDefault(); const h = byNum.get(+jumpBuf); cancelJump(); if (h) openHymn(h); else toast('NO SUCH HYMN'); return; }
+      if (k === 'Backspace') { e.preventDefault(); jumpBuf = jumpBuf.slice(0, -1); return updJump(); }
+      if (k === 'Escape') { e.preventDefault(); return cancelJump(); }
+    }
+    switch (k) {
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ': case 'Enter': e.preventDefault(); next(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp': case 'Backspace': e.preventDefault(); prev(); break;
+      case 'Home': e.preventDefault(); idx = 0; show(); break;
+      case 'End': e.preventDefault(); idx = slides.length - 1; show(); break;
+      case 'Escape': e.preventDefault(); goHome(); break;
+      case 'b': case 'B': case '.': $('#black').classList.toggle('on'); break;
+      case 't': case 'T': cycleTheme(); break;
+      case 'f': case 'F': toggleFull(); break;
+      case '+': case '=': scale = Math.min(1.6, +(scale + .08).toFixed(2)); store.set('scale', scale); fitCurrent(); toast('TEXT ' + Math.round(scale * 100) + '%'); break;
+      case '-': case '_': scale = Math.max(.6, +(scale - .08).toFixed(2)); store.set('scale', scale); fitCurrent(); toast('TEXT ' + Math.round(scale * 100) + '%'); break;
+      case '?': toggleOverlay('help'); break;
+      case 'i': case 'I': openBrowse(); break;
+      case 'd': case 'D': openHymn(special.D); break;
+      case 'r': case 'R': openHymn(special.R); break;
+    }
+  });
+
+  function toggleFull() {
+    if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {});
+  }
+  function toggleOverlay(id) { $('#' + id).classList.toggle('show'); }
+  document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
+
+  /* ---------- browse ---------- */
+  const grid = $('#grid'), bq = $('#browseQ');
+  function renderGrid() {
+    const q = bq.value.trim();
+    const list = !q ? DATA.hymns : /^\d+$/.test(q) ? DATA.hymns.filter(h => String(h.n).startsWith(q)) : (() => { const w = norm(q).split(' '); return INDEX.filter(it => w.every(x => it.key.includes(x))).map(it => it.h); })();
+    $('#browseCount').textContent = q ? `${list.length} found` : `All ${DATA.hymns.length} hymns`;
+    grid.innerHTML = list.map(h => `<button data-n="${h.n}"><b>${h.n}</b><span>${esc(h.t)}</span></button>`).join('');
+  }
+  function openBrowse() { bq.value = ''; renderGrid(); $('#browse').classList.add('show'); setTimeout(() => bq.focus(), 50); }
+  bq.addEventListener('input', renderGrid);
+  bq.addEventListener('keydown', e => { if (e.key === 'Enter') { const b = grid.querySelector('button'); if (b) b.click(); } });
+  grid.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('#browse').classList.remove('show'); openHymn(byNum.get(+b.dataset.n)); });
+
+  /* ---------- idle cursor/controls ---------- */
+  let idleT;
+  const wake = () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2600); };
+  addEventListener('mousemove', wake); addEventListener('mousedown', wake); wake();
+
+  /* small automation hook: CygnetHymnal.open(230) or CygnetHymnal.open(230, 2) */
+  window.CygnetHymnal = { open: (n, at = 0) => openHymn(n === 'D' || n === 'R' ? special[n] : byNum.get(+n), at), home: goHome };
+
+  /* ---------- start ---------- */
+  const qs = new URLSearchParams(location.search);
+  if (THEMES.includes(qs.get('theme'))) { theme = qs.get('theme'); applyTheme(); }
+  if (qs.get('q')) entry.value = qs.get('q');
+  renderChips(); renderPreview();
+  const m = /^#(\d+)(?:\/(\d+))?$/.exec(location.hash);
+  if (m && byNum.has(+m[1])) openHymn(byNum.get(+m[1]), +(m[2] || 0)); else entry.focus();
+})();
+</script>
+</body>
+</html>

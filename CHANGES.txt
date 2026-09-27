@@ -1,0 +1,54 @@
+CYGNET HYMNAL - corrections made to the source slides
+Sources: Advent_Hymnal_1-40 (26).pptx (hymns 1-40) and Advent_Hymnal.ppt (41-481)
+
+#230: "Take My Life and Let It Be" (duplicate of #1) -> original #1 "Before Jehovah’s Awful Throne"
+#188: "Chief of Sinners" (duplicate of #2) -> original #2 "Let All Men Sing Jehovah’s Praises"
+#187: "Pass Me Not, O Gentle Saviour" (duplicate of #3) -> original #3 "O Worship The Lord"
+#201: "‘Tis so Sweet to Trust in Jesus" (duplicate of #5) -> original #5 "All People That on Earth Do Dwell"
+#317: "I’m Pressing on the Upward Way" (duplicate of #6) -> original #6 "Lord of All Being, Throned Afar"
+#102: "A Wonderful Saviour Is Jesus My Lord" (duplicate of #7) -> original #7 "The Lord Jehovah Reigns"
+#250: "When Peace Like a River" (duplicate of #8) -> original #8 "O for a Heart to Praise My God!"
+#187 title: "O Worship The Lord" -> "O Worship the Lord"
+#191 title: "Just As I am Without one Plea" -> "Just As I Am, Without One Plea"
+#214 title: "Cease my soul from Doubt" -> "Cease, My Soul, from Doubt"
+#293 title: "Lead Thou me On" -> "Lead Thou Me On"
+#306 title: "My Faith Looks Up to Thee" -> "Lead, Kindly Light"
+#311 title: "How Firm a Foundation" -> "More Love to Thee"
+#352 title: "I’ll Go Where You Wand Me to Go" -> "I’ll Go Where You Want Me to Go"
+#410 title: "We re Living, We Are Dwelling" -> "We Are Living, We Are Dwelling"
+#455 title: "Jesus Love me" -> "Jesus Loves Me"
+#393 removed: source slide is a broken copy of #27
+#5 title case: "‘Tis so Sweet to Trust in Jesus" -> "‘Tis So Sweet to Trust in Jesus"
+#40 title case: "Abide With me" -> "Abide With Me"
+#69 title case: "Hark! the Herald Angels Sing" -> "Hark! The Herald Angels Sing"
+#96 title case: "How Sweet the name!" -> "How Sweet the Name!"
+#196 title case: "We Have heard a Joyful Sound" -> "We Have Heard a Joyful Sound"
+#200 title case: "Lord Jesus, I long to Be Perfectly Whole" -> "Lord Jesus, I Long to Be Perfectly Whole"
+#240 title case: "Jesus, Keep me Near the Cross" -> "Jesus, Keep Me Near the Cross"
+#335 title case: "How Lovely Is Thy Dwelling place" -> "How Lovely Is Thy Dwelling Place"
+#437 title case: "Jerusalem the golden" -> "Jerusalem the Golden"
+#456 title case: "He Loves me, Too" -> "He Loves Me, Too"
+#7: "dry, thirst land" -> "dry, thirsty land" (4x)
+#9: "Trust not prices" -> "Trust not princes" (1x)
+#23: "through all they days" -> "through all thy days" (1x)
+#37: "Thy will e done" -> "Thy will be done" (1x)
+#90: "And poor contempt" -> "And pour contempt" (1x)
+#93: "wine pressred?" -> "wine press red?" (1x)
+#100: "imploy" -> "employ" (1x)
+#116: "Thou art of truth and grace,." -> "Thou art full of truth and grace." (1x)
+#117: "is thy name" -> "is Thy name" (1x)
+#126: "Oh, what with" -> "Oh, that with" (1x)
+#221: "bringthen" -> "bringeth" (1x)
+#304: "wher’er" -> "where’er" (1x)
+#359: "again n strife" -> "again in strife" (1x)
+#375: "Points o His" -> "Points to His" (1x)
+#415: "He comes, e comes" -> "He comes, He comes" (3x)
+#475: "what’er" -> "whate’er" (1x)
+#481: "fellowship f kindred" -> "fellowship of kindred" (1x)
+tidied 25 lines, re-joined 12 broken lines
+#205: last verse relabelled 3, refrain continuation labelled
+#234: third verse relabelled 3
+#263: two-verse slides labelled 1–2 and 3–4
+#350: refrain labelled, stray "Repent:" removed, lout -> loud
+#427: verse 3 continuation labelled
+#481: restored missing verse 2 (John Fawcett, public domain)
